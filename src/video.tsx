@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 export const Video = ({
   muted,
@@ -16,7 +16,14 @@ export const Video = ({
   }, [media]);
   return (
     <>
-      <video height={110} width={160} muted={muted} autoPlay ref={videoRef} />
+      <video
+        height={300}
+        width="100%"
+        muted={muted}
+        autoPlay
+        ref={videoRef}
+        className="video"
+      />
     </>
   );
 };

@@ -30,6 +30,12 @@ function App({ roomId }: { roomId: string }) {
     Array<{ userId: string; stream: MediaStream }>
   >([]);
 
+  const [me, setMe] = useState<{ userId: string; stream: MediaStream }>();
+  const [remote, setRemote] = useState<{
+    userId: string;
+    stream: MediaStream;
+  }>();
+
   console.log({ roomId });
   console.log({ peers });
   useEffect(() => {
@@ -38,6 +44,7 @@ function App({ roomId }: { roomId: string }) {
       const call = myPeer.call(userId, stream);
       call.on("stream", (userVideoStream) => {
         // console.log({ remoteStream: userVideoStream });
+        setRemote({ userId, stream: userVideoStream });
         addVideoStream({
           peerId: userId,
           stream: userVideoStream,
@@ -86,6 +93,7 @@ function App({ roomId }: { roomId: string }) {
           .getUserMedia({ video: true, audio: true })
           .then((stream: MediaStream) => {
             setUserId(id);
+            setMe({ userId: id, stream });
             addVideoStream({ peerId: id, stream, flag: false });
 
             socket.on("user-connected", (userId) => {
@@ -99,6 +107,7 @@ function App({ roomId }: { roomId: string }) {
                 //   remotePeerId: call.peer,
                 //   remoteStream: userVideoStream,
                 // });
+                setRemote({ userId: call.peer, stream: userVideoStream });
                 addVideoStream({
                   peerId: call.peer,
                   stream: userVideoStream,
@@ -133,13 +142,27 @@ function App({ roomId }: { roomId: string }) {
         <h5>My User Id: {userId}</h5>
       </div>
       <div style={{ display: "flex", justifyContent: "flex-start" }}>
-        {peers.map((peer) => (
+        {/* {peers.map((peer) => (
           <Video
             key={peer.userId}
             media={peer.stream}
             muted={userId === peer.userId ? true : false}
           ></Video>
-        ))}
+        ))} */}
+        <div style={{ display: "flex", columnGap: "20px" }}>
+          <div>
+            <h3>LocalStream</h3>
+            <h6>Remote Id: {me?.userId}</h6>
+            <h6>Stream Id: {me?.stream?.id}</h6>
+            {me?.stream && <Video media={me?.stream} muted={true} />}
+          </div>
+          <div>
+            <h3>RemoteStream</h3>
+            <h6>Remote Id: {remote?.userId}</h6>
+            <h6>Stream Id: {remote?.stream?.id}</h6>
+            {remote?.stream && <Video media={remote?.stream} muted={false} />}
+          </div>
+        </div>
       </div>
     </section>
   );

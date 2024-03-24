@@ -40,3 +40,9 @@
 .read-the-docs {
   color: #888;
 }
+
+.video {
+  width: auto;
+  height: 300px;
+  transform: rotateY(180deg);
+}
