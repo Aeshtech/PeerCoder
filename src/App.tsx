@@ -24,7 +24,7 @@ const myPeer = new Peer({
 
 console.log({ instance: myPeer.id });
 // https://peer-coder.onrender.com
-const socket = io("http://localhost:4000");
+const socket = io("https://peer-coder.onrender.com");
 const peersObj: { [key: string]: MediaConnection } = {};
 
 function App({ roomId }: { roomId: string }) {
@@ -68,7 +68,6 @@ function App({ roomId }: { roomId: string }) {
     },
     [userId]
   );
-
   const connectToNewUser = useCallback(
     (userId: string, stream: MediaStream) => {
       const call = myPeer.call(userId, stream);
