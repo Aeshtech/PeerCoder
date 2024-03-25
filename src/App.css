@@ -43,6 +43,6 @@
 
 .video {
   width: auto;
-  height: 300px;
+  height: 150px;
   transform: rotateY(180deg);
 }
