@@ -33,23 +33,19 @@ function App({ roomId }: { roomId: string }) {
     Array<{ userId: string; stream: MediaStream }>
   >([]);
 
-  // const [me, setMe] = useState<{ userId: string; stream: MediaStream }>();
-  // const [remote, setRemote] = useState<{
-  //   userId: string;
-  //   stream: MediaStream;
-  // }>();
-
   console.log({ peers });
 
   const addVideoStream = useCallback(
     ({ peerId, stream }: { peerId: string; stream: MediaStream }) => {
+      //if peerId match with my userId then disable the vidoe & audio tracks for me to prevent from echo
       if (userId === peerId) {
         stream.getVideoTracks()[0].enabled = false;
         stream.getAudioTracks()[0].enabled = false;
       }
-
+      //functional update is neccessary to get latest peers
       setPeers((prevPeers) => {
         let found = false;
+        //just update the stream if peer userid match with my user id else return as it is.
         const updatedPeers = prevPeers.map((peer) => {
           if (peer.userId === userId) {
             found = true;
@@ -57,11 +53,11 @@ function App({ roomId }: { roomId: string }) {
           }
           return peer;
         });
-
+        //if its a new peer then add into list including its incoming stream
         if (!found) {
           updatedPeers.push({ userId: peerId, stream });
         }
-
+        //filtering the duplicatee peers if any before set into peers
         const filteredUpdatedPeers = filterUniqueUsers(updatedPeers);
         return filteredUpdatedPeers;
       });
@@ -69,99 +65,58 @@ function App({ roomId }: { roomId: string }) {
     [userId]
   );
   const connectToNewUser = useCallback(
-    (userId: string, stream: MediaStream) => {
-      const call = myPeer.call(userId, stream);
-      call.on("stream", (userVideoStream) => {
+    (remotePeerId: string, stream: MediaStream) => {
+      //call to the new user using its id and send our stream
+      const call = myPeer.call(remotePeerId, stream);
+      //Emitted when a remote peer adds a stream.
+      call.on("stream", (remoteVideoStream) => {
         addVideoStream({
-          peerId: userId,
-          stream: userVideoStream,
+          peerId: remotePeerId,
+          stream: remoteVideoStream,
         });
       });
+      //emitted either me or remote user closes the media connection then filter out the remote user
       call.on("close", () => {
         setPeers((prevPeers) =>
-          prevPeers.filter((peer) => peer.userId !== userId)
+          prevPeers.filter((peer) => peer.userId !== remotePeerId)
         );
       });
-      peersObj[userId] = call;
+      peersObj[remotePeerId] = call;
     },
     [addVideoStream]
   );
 
   useEffect(() => {
-    //  const connectToNewUser = (userId: string, stream: MediaStream) => {
-    //    const call = myPeer.call(userId, stream);
-    //    call.on("stream", (userVideoStream) => {
-    //      addVideoStream({
-    //        peerId: userId,
-    //        stream: userVideoStream,
-    //        flag: false,
-    //      });
-    //    });
-    //    call.on("close", () => {
-    //      const peersCopy = Array.from(peers);
-    //      const peersModified = peersCopy.filter((peer) => {
-    //        return peer.userId !== userId;
-    //      });
-    //      setPeers(peersModified);
-    //    });
-    //    peersObj[userId] = call;
-    //  };
-
-    //  const addVideoStream = ({
-    //    peerId,
-    //    stream,
-    //    flag,
-    //  }: {
-    //    peerId: string;
-    //    stream: MediaStream;
-    //    flag: boolean;
-    //  }) => {
-    //    if (userId === peerId) {
-    //      stream.getVideoTracks()[0].enabled = false;
-    //      stream.getAudioTracks()[0].enabled = false;
-    //    }
-    //    let peersCopy = [...peers];
-    //    peersCopy = peersCopy.map((peer) => {
-    //      //if peer found in list match with my userId just update the stream and make flag true
-    //      if (peer.userId === userId) {
-    //        peer.stream = stream;
-    //        flag = true;
-    //      }
-    //      return peer;
-    //    });
-    //    //just add new peer to list
-    //    if (!flag) peersCopy.push({ userId: peerId, stream: stream });
-    //    setPeers(peersCopy);
-    //  };
-
+    //Emitted when a connection to the PeerServer is established
     myPeer.on("open", (id) => {
       if (navigator) {
         navigator.mediaDevices
           .getUserMedia({ video: true, audio: true })
           .then((stream: MediaStream) => {
-            setUserId(id);
-            // setMe({ userId: id, stream });
+            //emits join room with roomId and the my peer id
+            socket.emit("join-room", roomId, id);
 
+            setUserId(id);
             //add my peerId and stream to list of peers
             addVideoStream({ peerId: id, stream });
 
+            //when new user connected then call it by provding my stream
             socket.on("user-connected", (userId) => {
               connectToNewUser(userId, stream);
             });
 
+            //emitter when a remote user tries to call me
             myPeer.on("call", (call) => {
+              //answer the call by providing my stream
               call.answer(stream);
+              //emitted if getting stream from remote
               call.on("stream", (userVideoStream) => {
-                console.log({
-                  remotePeerId: call.peer,
-                  remoteStream: userVideoStream,
-                });
-                // setRemote({ userId: call.peer, stream: userVideoStream });
                 addVideoStream({
                   peerId: call.peer,
                   stream: userVideoStream,
                 });
               });
+              //emitted either me or remote user closes the mediaconnection then filter out the remote user
               call.on("close", () => {
                 setPeers((prevPeers) =>
                   prevPeers.filter((peer) => peer.userId !== call.peer)
@@ -169,8 +124,6 @@ function App({ roomId }: { roomId: string }) {
               });
               peersObj[call.peer] = call;
             });
-
-            socket.emit("join-room", roomId, id);
           });
       }
     });
@@ -202,20 +155,6 @@ function App({ roomId }: { roomId: string }) {
             muted={userId === peer.userId ? true : false}
           ></Video>
         ))}
-        {/* <div style={{ display: "flex", columnGap: "20px" }}>
-          <div>
-            <h3>LocalStream</h3>
-            <h6>Remote Id: {me?.userId}</h6>
-            <h6>Stream Id: {me?.stream?.id}</h6>
-            {me?.stream && <Video media={me?.stream} muted={true} />}
-          </div>
-          <div>
-            <h3>RemoteStream</h3>
-            <h6>Remote Id: {remote?.userId}</h6>
-            <h6>Stream Id: {remote?.stream?.id}</h6>
-            {remote?.stream && <Video media={remote?.stream} muted={false} />}
-          </div>
-        </div> */}
       </div>
     </section>
   );
