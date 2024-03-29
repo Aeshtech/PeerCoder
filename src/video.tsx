@@ -22,7 +22,10 @@ export const Video = ({
         muted={muted}
         autoPlay
         ref={videoRef}
-        className="video"
+        className="video w-auto h-[140px] rounded-[10px] border-[1px] border-[#ffffff1f]"
+        style={{
+          boxShadow: "2px 2px 5px 0px #00000045, -2px -2px 5px 0px #00000045",
+        }}
       />
     </>
   );

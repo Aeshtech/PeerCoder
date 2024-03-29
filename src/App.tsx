@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
-import "./App.css";
+import "./global.css";
 import Peer, { MediaConnection } from "peerjs";
 import io from "socket.io-client";
-import { Video } from "./video";
 import { filterUniqueUsers } from "./utils/helpers";
+import toast from "react-hot-toast";
+import Editor from "./components/editor";
+import Header from "./components/header";
+import PeersVideoWrapper from "./components/peers-video-wrapper";
 
+export type PeersType = Array<{
+  userId: string;
+  stream: MediaStream;
+}>;
 //creating peer instance and configuring the iceServers
 const myPeer = new Peer({
   // host: "peerjs.92k.de",
@@ -28,10 +35,8 @@ const socket = io("https://peer-coder.onrender.com");
 const peersObj: { [key: string]: MediaConnection } = {};
 
 function App({ roomId }: { roomId: string }) {
-  const [userId, setUserId] = useState("");
-  const [peers, setPeers] = useState<
-    Array<{ userId: string; stream: MediaStream }>
-  >([]);
+  const [userId, setUserId] = useState(""); //representing my peer id
+  const [peers, setPeers] = useState<PeersType>([]);
 
   console.log({ peers });
 
@@ -80,6 +85,10 @@ function App({ roomId }: { roomId: string }) {
         setPeers((prevPeers) =>
           prevPeers.filter((peer) => peer.userId !== remotePeerId)
         );
+        toast("Peer Connection Closed!", {
+          icon: "🧑‍💻",
+          id: "peer-connection-closed",
+        });
       });
       peersObj[remotePeerId] = call;
     },
@@ -102,10 +111,14 @@ function App({ roomId }: { roomId: string }) {
 
             //when new user connected then call it by provding my stream
             socket.on("user-connected", (userId) => {
+              toast("New Peer Connected!", {
+                icon: "🧑‍💻",
+                id: "peer-connected",
+              });
               connectToNewUser(userId, stream);
             });
 
-            //emitter when a remote user tries to call me
+            //emitter when remote user's tries to call me
             myPeer.on("call", (call) => {
               //answer the call by providing my stream
               call.answer(stream);
@@ -118,13 +131,37 @@ function App({ roomId }: { roomId: string }) {
               });
               //emitted either me or remote user closes the mediaconnection then filter out the remote user
               call.on("close", () => {
+                toast("Peer Connection Closed!", {
+                  icon: "🧑‍💻",
+                  id: "peer-connection-closed",
+                });
                 setPeers((prevPeers) =>
                   prevPeers.filter((peer) => peer.userId !== call.peer)
                 );
               });
               peersObj[call.peer] = call;
             });
+          })
+          .catch((err) => {
+            if (err.name === "NotAllowedError") {
+              toast.error(
+                "Permission denied. Please allow your camera and microphone permission."
+              );
+            } else if (err.name === "NotFoundError") {
+              toast.error(
+                "No media devices found. This could be due to missing or disconnected devices."
+              );
+            } else if (err.name === "NotReadableError") {
+              toast.error(
+                "Media input is not readable. This could be due to hardware failure or user denied access to media devices."
+              );
+            } else {
+              toast.error("Error occurred while accessing media devices:");
+              console.log(err);
+            }
           });
+      } else {
+        console.error("navigator.mediaDevices is not supported");
       }
     });
 
@@ -134,29 +171,17 @@ function App({ roomId }: { roomId: string }) {
   }, [addVideoStream, connectToNewUser, peers, roomId, userId]);
 
   return (
-    <section>
-      <h1>Video Stream</h1>
-      <div>
-        <h5>Room Id: {roomId}</h5>
-        <h5>My User Id: {userId}</h5>
-      </div>
-      <ol>
-        {peers.map((item, index) => (
-          <li key={index}>
-            UserId = {item.userId}, StreamId = {item.stream.id}
-          </li>
-        ))}
-      </ol>
-      <div style={{ display: "flex", justifyContent: "flex-start" }}>
-        {peers.map((peer, index) => (
-          <Video
-            key={index}
-            media={peer.stream}
-            muted={userId === peer.userId ? true : false}
-          ></Video>
-        ))}
-      </div>
-    </section>
+    <main
+      className="border-[0px] border-[#ffffff80] rounded-t-[10px] backdrop-blur-[8px]"
+      style={{
+        boxShadow:
+          "2px 2px 10px rgba(0, 0, 0, 0.3), -2px 2px 10px rgba(0, 0, 0, 0.2)",
+      }}
+    >
+      <Header roomId={roomId} myPeerId={userId} />
+      <PeersVideoWrapper peers={peers} userId={userId} />
+      <Editor />
+    </main>
   );
 }
 

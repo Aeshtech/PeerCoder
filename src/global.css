@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+}
+
+:root {
+  --blackWhite: black;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --blackWhite: white;
+  }
+}
+.video {
+  transform: rotateY(180deg);
+}
+
+body {
+  min-height: 100vh;
+  width: 100%;
+  background: url("/public/images/backgrounds/background1.jpeg") no-repeat;
+  /* background: url("/public/images/backgrounds/background2.png") no-repeat; */
+  background-size: cover;
+  background-position: center;
+  padding: 20px 30px 20px;
+  @media screen and (min-width: 1280px) {
+    padding: 20px 40px 20px;
+  }
+}
+
+main {
+  box-shadow: rgba(0, 0, 0, 0.3) 2px 2px 10px, rgba(0, 0, 0, 0.2) -2px 2px 10px;
+}
+
+select {
+  box-shadow: 0 0 5px #171716e3;
+}
+
+select option {
+  background-color: rgba(0, 0, 0, 0.796);
+}
