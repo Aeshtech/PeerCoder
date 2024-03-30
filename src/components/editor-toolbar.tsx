@@ -21,6 +21,7 @@ const EditorToolbar = ({ config }: { config: EditorToolbarType }) => {
     <div className="h-[50px] border-b-[1px] border-[#ffffff1f] flex items-center justify-between px-[30px]">
       <div>
         <select
+          title="Select Programming Language"
           value={selectedLanguage}
           onChange={(e: any) =>
             setSelectedLanguage(e.target.value as LanguageType)
@@ -34,6 +35,7 @@ const EditorToolbar = ({ config }: { config: EditorToolbarType }) => {
           {/* <option value="javascript">JavaScript</option> */}
         </select>
         <select
+          title="Select Editor Theme"
           value={selectedTheme}
           onChange={(e: any) => setSelectedTheme(e.target.value as ThemeType)}
           className="bg-transparent text-white min-w-[140px] h-[35px] rounded-[5px] outline-none cursor-pointer ml-[20px] border-[1px] border-[#ffffff1f]"
@@ -50,13 +52,14 @@ const EditorToolbar = ({ config }: { config: EditorToolbarType }) => {
       </div>
       <div>
         <button
+          title="Run the Code"
           onClick={handleRunClick}
           disabled={executionInProgress}
-          className={`border-[1px] bg-indigo-700 text-white flex-center px-[10px] h-[30px] ${
+          className={`codeRunBtn border-[1px] border-[#ffffff1f] bg-transparent text-white rounded-[5px] outline-none flex-center px-[10px] h-[30px] active:scale-[0.97] ${
             executionInProgress && "cursor-not-allowed"
           }`}
         >
-          {!executionInProgress ? "Run the Code" : "Running..."}
+          {!executionInProgress ? "Run the Code" : "Executing..."}
         </button>
       </div>
     </div>

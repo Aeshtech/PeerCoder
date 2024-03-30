@@ -1,7 +1,7 @@
 "use client";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import CodeMirror, { Extension } from "@uiw/react-codemirror";
-import { javascript } from "@codemirror/lang-javascript";
+import CodeMirror from "@uiw/react-codemirror";
+// import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
@@ -16,7 +16,7 @@ import {
   atomone,
 } from "@uiw/codemirror-themes-all";
 
-export type LanguageType = "java" | "python" | "c" | "c++";
+export type LanguageType = "java" | "python" | "c" | "cpp";
 export type ThemeType =
   | "abcdef"
   | "atomone"
@@ -45,14 +45,19 @@ const themes = {
   basicLight,
 };
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import EditorToolbar from "./editor-toolbar";
+import {
+  defaultCCode,
+  defaultCPPCode,
+  defaultJavaCode,
+  defaultPythonCode,
+} from "../utils/defaults";
 
 const Editor = () => {
   const [selectedLanguage, setSelectedLanguage] =
     useState<LanguageType>("java");
-  const [selectedTheme, setSelectedTheme] =
-    useState<ThemeType>("androidstudio");
+  const [selectedTheme, setSelectedTheme] = useState<ThemeType>("githubDark");
   const [executionInProgress, setExecutionInProgress] = useState(false);
   const [code, setCode] = useState("");
   const [input, setInput] = useState("");
@@ -61,9 +66,27 @@ const Editor = () => {
   const extensionLanguage = (languages as any)[selectedLanguage];
   const extensionTheme = (themes as any)[selectedTheme];
 
+  useEffect(() => {
+    let flag = true;
+    if (flag) {
+      if (selectedLanguage === "java") {
+        setCode(defaultJavaCode);
+      } else if (selectedLanguage === "python") {
+        setCode(defaultPythonCode);
+      } else if (selectedLanguage === "c") {
+        setCode(defaultCCode);
+      } else if (selectedLanguage === "cpp") {
+        setCode(defaultCPPCode);
+      }
+    }
+
+    return () => {
+      flag = false;
+    };
+  }, [selectedLanguage]);
+
   const handleRunClick = async () => {
     setExecutionInProgress(true);
-    console.log({ code });
     const body = {
       source_code: code,
       language: selectedLanguage,
@@ -83,7 +106,6 @@ const Editor = () => {
     }
 
     const data = await res.json();
-    console.log(data);
     const query = new URLSearchParams({
       id: data?.id,
       api_key: "guest",
