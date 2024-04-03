@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "./global.css";
 import Peer, { MediaConnection } from "peerjs";
 import io from "socket.io-client";
@@ -24,12 +24,10 @@ const myPeer = new Peer({
       { urls: "stun:stun2.l.google.com:19302" },
       { urls: "stun:stun3.l.google.com:19302" },
       { urls: "stun:freeturn.net:3478" },
-      // { urls: "stun:freeturn.net:5349" },
     ],
   },
 });
 
-console.log({ instance: myPeer.id });
 // https://peer-coder.onrender.com
 const socket = io("https://peer-coder.onrender.com");
 const peersObj: { [key: string]: MediaConnection } = {};
@@ -37,8 +35,7 @@ const peersObj: { [key: string]: MediaConnection } = {};
 function App({ roomId }: { roomId: string }) {
   const [userId, setUserId] = useState(""); //representing my peer id
   const [peers, setPeers] = useState<PeersType>([]);
-
-  console.log({ peers });
+  // const streamRef = useRef<MediaStream | undefined>();
 
   const addVideoStream = useCallback(
     ({ peerId, stream }: { peerId: string; stream: MediaStream }) => {
@@ -102,12 +99,14 @@ function App({ roomId }: { roomId: string }) {
         navigator.mediaDevices
           .getUserMedia({ video: true, audio: true })
           .then((stream: MediaStream) => {
-            //emits join room with roomId and the my peer id
-            socket.emit("join-room", roomId, id);
-
             setUserId(id);
             //add my peerId and stream to list of peers
             addVideoStream({ peerId: id, stream });
+
+            // Assign the stream to useRef
+            // if (streamRef) {
+            //   streamRef.current = stream; // Add semicolon her
+            // }
 
             //when new user connected then call it by provding my stream
             socket.on("user-connected", (userId) => {
@@ -141,6 +140,9 @@ function App({ roomId }: { roomId: string }) {
               });
               peersObj[call.peer] = call;
             });
+
+            //emits join room with roomId and the my peer id
+            socket.emit("join-room", roomId, id);
           })
           .catch((err) => {
             if (err.name === "NotAllowedError") {
@@ -168,6 +170,15 @@ function App({ roomId }: { roomId: string }) {
     socket.on("user-disconnected", (userId) => {
       if (peersObj[userId]) peersObj[userId].close();
     });
+
+    return () => {
+      // const cleanupWrapper = () => {
+      //   socket.off("user-connected", (userId) =>
+      //     connectToNewUser(userId, streamRef.current)
+      //   );
+      // };
+      // cleanupWrapper();
+    };
   }, [addVideoStream, connectToNewUser, peers, roomId, userId]);
 
   return (
@@ -180,7 +191,7 @@ function App({ roomId }: { roomId: string }) {
     >
       <Header roomId={roomId} myPeerId={userId} />
       <PeersVideoWrapper peers={peers} userId={userId} />
-      <Editor />
+      <Editor socket={socket} />
     </main>
   );
 }

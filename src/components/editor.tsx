@@ -1,4 +1,6 @@
 "use client";
+import { useEffect, useState } from "react";
+import { Socket, io } from "socket.io-client";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import CodeMirror from "@uiw/react-codemirror";
 // import { javascript } from "@codemirror/lang-javascript";
@@ -15,6 +17,15 @@ import {
   basicLight,
   atomone,
 } from "@uiw/codemirror-themes-all";
+import EditorToolbar from "./editor-toolbar";
+import {
+  defaultCCode,
+  defaultCPPCode,
+  defaultJavaCode,
+  defaultPythonCode,
+} from "../utils/defaults";
+import toast from "react-hot-toast";
+// import toast from "react-hot-toast";
 
 export type LanguageType = "java" | "python" | "c" | "cpp";
 export type ThemeType =
@@ -45,16 +56,7 @@ const themes = {
   basicLight,
 };
 
-import { useEffect, useState } from "react";
-import EditorToolbar from "./editor-toolbar";
-import {
-  defaultCCode,
-  defaultCPPCode,
-  defaultJavaCode,
-  defaultPythonCode,
-} from "../utils/defaults";
-
-const Editor = () => {
+const Editor = ({ socket }: { socket: Socket }) => {
   const [selectedLanguage, setSelectedLanguage] =
     useState<LanguageType>("java");
   const [selectedTheme, setSelectedTheme] = useState<ThemeType>("githubDark");
@@ -65,6 +67,43 @@ const Editor = () => {
 
   const extensionLanguage = (languages as any)[selectedLanguage];
   const extensionTheme = (themes as any)[selectedTheme];
+
+  //----------editor related listenres-----------
+  // updateCodeFromSocketsS(payload);
+  // setCode(payload);
+
+  const handleReceiveCode = (payload: any) => {
+    console.count("count");
+    setCode(payload);
+  };
+
+  // Set up socket event listener when the component mounts
+  useEffect(() => {
+    socket.on("receive code", handleReceiveCode);
+    return () => {
+      socket.off("receive code", handleReceiveCode);
+    };
+  }, []);
+
+  // socket.on("receive input", (payload) => {
+  //   updateInputFromSockets(payload);
+  // });
+  // socket.on("receive output", (payload) => {
+  //   updateOutputFromSockets(payload);
+  // });
+  // socket.on("receive-data-for-new-user", (payload) => {
+  //   updateStateFromSockets(payload);
+  // });
+  // socket.on("mode-change-receive", (payload) => {
+  //   updateModeFromSockets(payload);
+  // });
+
+  const handleChangeCode = (newCode: string) => {
+    setCode(newCode);
+    socket.emit("code change", newCode);
+  };
+
+  console.count("Rendered");
 
   useEffect(() => {
     let flag = true;
@@ -176,7 +215,7 @@ const Editor = () => {
         <Panel className="min-h-[70vh]" minSize={50}>
           <CodeMirror
             value={code}
-            onChange={(value: any) => setCode(value)}
+            onChange={(value: any) => handleChangeCode(value)}
             extensions={[extensionLanguage]} // Use the appropriate language extension
             theme={extensionTheme} // Optional: Set a theme (see available themes)
             height="70vh" // Optional: Set height
@@ -190,9 +229,9 @@ const Editor = () => {
                 placeholder={"Enter your input values, one per line, if any"}
                 value={input}
                 onChange={(value: any) => setInput(value)}
-                extensions={[]} // Use the appropriate language extension
-                theme={extensionTheme} // Optional: Set a theme (see available themes)
-                height="400px" // Optional: Set height
+                extensions={[]}
+                theme={extensionTheme}
+                height="400px"
               />
             </Panel>
             <PanelResizeHandle className="bg-transparent h-[3px]" />
@@ -202,8 +241,8 @@ const Editor = () => {
                 readOnly
                 value={output}
                 extensions={[]} // Use the appropriate language extension
-                theme={extensionTheme} // Optional: Set a theme (see available themes)
-                height="400px" // Optional: Set height
+                theme={extensionTheme}
+                height="400px"
               />
             </Panel>
           </PanelGroup>
