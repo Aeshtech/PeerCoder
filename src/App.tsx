@@ -95,6 +95,9 @@ function App({ roomId }: { roomId: string }) {
   useEffect(() => {
     //Emitted when a connection to the PeerServer is established
     myPeer.on("open", (id) => {
+      //emits join room with roomId and the my peer id
+      socket.emit("join-room", roomId, id);
+
       if (navigator) {
         navigator.mediaDevices
           .getUserMedia({ video: true, audio: true })
@@ -140,9 +143,6 @@ function App({ roomId }: { roomId: string }) {
               });
               peersObj[call.peer] = call;
             });
-
-            //emits join room with roomId and the my peer id
-            socket.emit("join-room", roomId, id);
           })
           .catch((err) => {
             if (err.name === "NotAllowedError") {
@@ -170,15 +170,6 @@ function App({ roomId }: { roomId: string }) {
     socket.on("user-disconnected", (userId) => {
       if (peersObj[userId]) peersObj[userId].close();
     });
-
-    return () => {
-      // const cleanupWrapper = () => {
-      //   socket.off("user-connected", (userId) =>
-      //     connectToNewUser(userId, streamRef.current)
-      //   );
-      // };
-      // cleanupWrapper();
-    };
   }, [addVideoStream, connectToNewUser, peers, roomId, userId]);
 
   return (
