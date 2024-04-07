@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Socket, io } from "socket.io-client";
+import { Socket } from "socket.io-client";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import CodeMirror from "@uiw/react-codemirror";
 // import { javascript } from "@codemirror/lang-javascript";
@@ -30,7 +30,6 @@ import {
   getLocalStorage,
   setLocalStorage,
 } from "../utils/helpers";
-// import toast from "react-hot-toast";
 
 export type LanguageType = "java" | "python" | "c" | "cpp";
 export type ThemeType =
@@ -100,9 +99,6 @@ const Editor = ({ socket }: { socket: Socket }) => {
       if (localStoredLanguage)
         setSelectedLanguage(localStoredLanguage as LanguageType);
       const localStoredCode = getLocalStorage("code");
-      //this condition can occur when you have a code in other than default language(here default is 'java'), and
-      //new user connect then they already recieved the while 'user-connected' listner trigger which will set the states
-      console.log({ localStoredCode });
       if (localStoredCode) {
         setCode(localStoredCode);
       } else {
@@ -171,6 +167,10 @@ const Editor = ({ socket }: { socket: Socket }) => {
     setOutput(output);
     setCode(code);
     setSelectedLanguage(selectedLanguage);
+    setLocalStorage("code", code);
+    setLocalStorage("input", input);
+    setLocalStorage("output", output);
+    setLocalStorage("selectedLanguage", selectedLanguage);
   };
 
   const handleRecieveModeChange = (payload: LanguageType) => {

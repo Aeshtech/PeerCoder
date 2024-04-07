@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./global.css";
 import Peer, { MediaConnection } from "peerjs";
 import io from "socket.io-client";
