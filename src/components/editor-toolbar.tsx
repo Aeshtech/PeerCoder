@@ -6,6 +6,7 @@ export interface EditorToolbarType {
   setSelectedTheme: (value: ThemeType) => void;
   handleRunClick: () => void;
   executionInProgress?: boolean;
+  resetEditorForMe: () => void;
 }
 
 const EditorToolbar = ({ config }: { config: EditorToolbarType }) => {
@@ -16,10 +17,11 @@ const EditorToolbar = ({ config }: { config: EditorToolbarType }) => {
     setSelectedTheme,
     handleRunClick,
     executionInProgress,
+    resetEditorForMe,
   } = config;
   return (
     <div className="h-[50px] border-b-[1px] border-[#ffffff1f] flex items-center justify-between px-[30px]">
-      <div>
+      <div className="flex gap-x-[20px]">
         <select
           title="Select Programming Language"
           value={selectedLanguage}
@@ -38,7 +40,7 @@ const EditorToolbar = ({ config }: { config: EditorToolbarType }) => {
           title="Select Editor Theme"
           value={selectedTheme}
           onChange={(e: any) => setSelectedTheme(e.target.value as ThemeType)}
-          className="bg-transparent text-white min-w-[140px] h-[35px] rounded-[5px] outline-none cursor-pointer ml-[20px] border-[1px] border-[#ffffff1f]"
+          className="bg-transparent text-white min-w-[140px] h-[35px] rounded-[5px] outline-none cursor-pointer border-[1px] border-[#ffffff1f]"
         >
           <option value="abcdef">Abcdef</option>
           <option value="atomone">Atom One</option>
@@ -49,13 +51,25 @@ const EditorToolbar = ({ config }: { config: EditorToolbarType }) => {
           <option value="githubDark">Github Dark</option>
           <option value="xcodeDark">X Code Dark</option>
         </select>
+        <button
+          title="Reset code only for me"
+          onClick={() => {
+            const res = window.confirm(
+              "Are you sure reset your editor ? Note: This will erase all your code only for you."
+            );
+            if (res) resetEditorForMe();
+          }}
+          className="codeRunBtn border-[1px] border-[#ffffff1f] bg-transparent text-white rounded-[5px] outline-none flex-center px-[10px] h-[35px] active:scale-[0.97]"
+        >
+          Reset My Editor
+        </button>
       </div>
       <div>
         <button
           title="Run the Code"
           onClick={handleRunClick}
           disabled={executionInProgress}
-          className={`codeRunBtn border-[1px] border-[#ffffff1f] bg-transparent text-white rounded-[5px] outline-none flex-center px-[10px] h-[30px] active:scale-[0.97] ${
+          className={`codeRunBtn border-[1px] border-[#ffffff1f] bg-transparent text-white rounded-[5px] outline-none flex-center px-[10px] h-[35px] active:scale-[0.97] ${
             executionInProgress && "cursor-not-allowed"
           }`}
         >

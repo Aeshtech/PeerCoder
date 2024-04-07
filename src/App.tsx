@@ -28,7 +28,7 @@ const myPeer = new Peer({
   },
 });
 
-// https://peer-coder.onrender.com
+//https://peer-coder.onrender.com
 const socket = io("https://peer-coder.onrender.com");
 const peersObj: { [key: string]: MediaConnection } = {};
 
@@ -37,6 +37,7 @@ function App({ roomId }: { roomId: string }) {
   const [peers, setPeers] = useState<PeersType>([]);
   // const streamRef = useRef<MediaStream | undefined>();
 
+  console.log({ peers });
   const addVideoStream = useCallback(
     ({ peerId, stream }: { peerId: string; stream: MediaStream }) => {
       //if peerId match with my userId then disable the vidoe & audio tracks for me to prevent from echo
@@ -66,18 +67,19 @@ function App({ roomId }: { roomId: string }) {
     },
     [userId]
   );
+
   const connectToNewUser = useCallback(
     (remotePeerId: string, stream: MediaStream) => {
       //call to the new user using its id and send our stream
       const call = myPeer.call(remotePeerId, stream);
-      //Emitted when a remote peer adds a stream.
+      //Listen for remote peer adds a stream.
       call.on("stream", (remoteVideoStream) => {
         addVideoStream({
           peerId: remotePeerId,
           stream: remoteVideoStream,
         });
       });
-      //emitted either me or remote user closes the media connection then filter out the remote user
+      //listen either me or remote user closes the media connection then filter out the remote user
       call.on("close", () => {
         setPeers((prevPeers) =>
           prevPeers.filter((peer) => peer.userId !== remotePeerId)
@@ -95,7 +97,8 @@ function App({ roomId }: { roomId: string }) {
   useEffect(() => {
     //Emitted when a connection to the PeerServer is established
     myPeer.on("open", (id) => {
-      //emits join room with roomId and the my peer id
+      //emits join room with roomId and the my peer id, emitting out of navigator so,
+      //that remote user should connected even if he denies for camera/audio
       socket.emit("join-room", roomId, id);
 
       if (navigator) {
@@ -106,11 +109,6 @@ function App({ roomId }: { roomId: string }) {
             //add my peerId and stream to list of peers
             addVideoStream({ peerId: id, stream });
 
-            // Assign the stream to useRef
-            // if (streamRef) {
-            //   streamRef.current = stream; // Add semicolon her
-            // }
-
             //when new user connected then call it by provding my stream
             socket.on("user-connected", (userId) => {
               toast("New Peer Connected!", {
@@ -120,11 +118,11 @@ function App({ roomId }: { roomId: string }) {
               connectToNewUser(userId, stream);
             });
 
-            //emitter when remote user's tries to call me
+            //listen when remote peers's tries to call me
             myPeer.on("call", (call) => {
               //answer the call by providing my stream
               call.answer(stream);
-              //emitted if getting stream from remote
+              //listen if getting stream from remote
               call.on("stream", (userVideoStream) => {
                 addVideoStream({
                   peerId: call.peer,
@@ -143,6 +141,8 @@ function App({ roomId }: { roomId: string }) {
               });
               peersObj[call.peer] = call;
             });
+            //emits join room with roomId and the my peer
+            socket.emit("join-room", roomId, id);
           })
           .catch((err) => {
             if (err.name === "NotAllowedError") {
@@ -172,6 +172,32 @@ function App({ roomId }: { roomId: string }) {
     });
   }, [addVideoStream, connectToNewUser, peers, roomId, userId]);
 
+  const handleVideoToggle = (userId: string) => {
+    setPeers((prevPeers) =>
+      prevPeers.map((peer) => {
+        if (peer.userId === userId) {
+          const enabled = peer.stream.getVideoTracks()[0].enabled;
+          peer.stream.getVideoTracks()[0].enabled = !enabled;
+          return peer;
+        }
+        return peer;
+      })
+    );
+  };
+
+  const handleAudioToggle = (userId: string) => {
+    setPeers((prevPeers) =>
+      prevPeers.map((peer) => {
+        if (peer.userId === userId) {
+          const enabled = peer.stream.getAudioTracks()[0].enabled;
+          peer.stream.getAudioTracks()[0].enabled = !enabled;
+          return peer;
+        }
+        return peer;
+      })
+    );
+  };
+
   return (
     <main
       className="border-[0px] border-[#ffffff80] rounded-t-[10px] backdrop-blur-[8px]"
@@ -180,7 +206,12 @@ function App({ roomId }: { roomId: string }) {
           "2px 2px 10px rgba(0, 0, 0, 0.3), -2px 2px 10px rgba(0, 0, 0, 0.2)",
       }}
     >
-      <Header roomId={roomId} myPeerId={userId} />
+      <Header
+        roomId={roomId}
+        myPeerId={userId}
+        handleVideoToggle={handleVideoToggle}
+        handleAudioToggle={handleAudioToggle}
+      />
       <PeersVideoWrapper peers={peers} userId={userId} />
       <Editor socket={socket} />
     </main>

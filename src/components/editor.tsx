@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Socket, io } from "socket.io-client";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import CodeMirror from "@uiw/react-codemirror";
@@ -24,7 +24,12 @@ import {
   defaultJavaCode,
   defaultPythonCode,
 } from "../utils/defaults";
-import toast from "react-hot-toast";
+import {
+  debounce,
+  deleteLocalStorage,
+  getLocalStorage,
+  setLocalStorage,
+} from "../utils/helpers";
 // import toast from "react-hot-toast";
 
 export type LanguageType = "java" | "python" | "c" | "cpp";
@@ -38,6 +43,12 @@ export type ThemeType =
   | "githubDark"
   | "basicLight";
 
+interface PayloadForNewUser {
+  code: string;
+  input: string;
+  output: string;
+  selectedLanguage: LanguageType;
+}
 const languages = {
   python: python(),
   java: java(),
@@ -64,65 +75,148 @@ const Editor = ({ socket }: { socket: Socket }) => {
   const [code, setCode] = useState("");
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
-
   const extensionLanguage = (languages as any)[selectedLanguage];
   const extensionTheme = (themes as any)[selectedTheme];
-
-  //----------editor related listenres-----------
-  // updateCodeFromSocketsS(payload);
-  // setCode(payload);
-
-  const handleReceiveCode = (payload: any) => {
-    console.count("count");
-    setCode(payload);
-  };
-
-  // Set up socket event listener when the component mounts
-  useEffect(() => {
-    socket.on("receive code", handleReceiveCode);
-    return () => {
-      socket.off("receive code", handleReceiveCode);
-    };
-  }, []);
-
-  // socket.on("receive input", (payload) => {
-  //   updateInputFromSockets(payload);
-  // });
-  // socket.on("receive output", (payload) => {
-  //   updateOutputFromSockets(payload);
-  // });
-  // socket.on("receive-data-for-new-user", (payload) => {
-  //   updateStateFromSockets(payload);
-  // });
-  // socket.on("mode-change-receive", (payload) => {
-  //   updateModeFromSockets(payload);
-  // });
-
-  const handleChangeCode = (newCode: string) => {
-    setCode(newCode);
-    socket.emit("code change", newCode);
-  };
-
-  console.count("Rendered");
+  const setLocalStorageDebounced = useRef(debounce(setLocalStorage, 300));
 
   useEffect(() => {
     let flag = true;
     if (flag) {
-      if (selectedLanguage === "java") {
-        setCode(defaultJavaCode);
-      } else if (selectedLanguage === "python") {
-        setCode(defaultPythonCode);
-      } else if (selectedLanguage === "c") {
-        setCode(defaultCCode);
-      } else if (selectedLanguage === "cpp") {
-        setCode(defaultCPPCode);
+      const localStoredInput = getLocalStorage("input");
+      const localStoredLanguage = getLocalStorage("selectedLanguage");
+      if (localStoredInput) setInput(localStoredInput);
+      if (localStoredLanguage)
+        setSelectedLanguage(localStoredLanguage as LanguageType);
+    }
+    return () => {
+      flag = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let flag = true;
+    if (flag) {
+      const localStoredLanguage = getLocalStorage("selectedLanguage");
+      if (localStoredLanguage)
+        setSelectedLanguage(localStoredLanguage as LanguageType);
+      const localStoredCode = getLocalStorage("code");
+      //this condition can occur when you have a code in other than default language(here default is 'java'), and
+      //new user connect then they already recieved the while 'user-connected' listner trigger which will set the states
+      console.log({ localStoredCode });
+      if (localStoredCode) {
+        setCode(localStoredCode);
+      } else {
+        switch (selectedLanguage) {
+          case "java":
+            setCode(defaultJavaCode);
+            break;
+          case "cpp":
+            setCode(defaultCPPCode);
+            break;
+          case "c":
+            setCode(defaultCCode);
+            break;
+          case "python":
+            setCode(defaultPythonCode);
+            break;
+        }
       }
     }
-
     return () => {
       flag = false;
     };
   }, [selectedLanguage]);
+
+  //----------editor related listenres-----------
+
+  // Set up socket event listener when the component mounts
+  useEffect(() => {
+    socket.on("receive code", handleReceiveCode);
+    socket.on("receive input", handleReceiveInput);
+    socket.on("receive output", handleReceiveOutput);
+    socket.on("mode-change-receive", handleRecieveModeChange);
+    socket.on("receive-data-for-new-user", handleRecieveStatesFromSockets);
+    socket.on("user-connected", sendDatatoNewUser);
+
+    return () => {
+      socket.off("receive code", handleReceiveCode);
+      socket.off("receive input", handleReceiveInput);
+      socket.off("receive output", handleReceiveOutput);
+      socket.off("mode-change-receive", handleRecieveModeChange);
+      socket.off("receive-data-for-new-user", handleRecieveStatesFromSockets);
+      socket.off("user-connected", sendDatatoNewUser);
+    };
+  }, [code, input, output, selectedLanguage]);
+
+  // ------------------handlers--------------------
+
+  const handleReceiveCode = (payload: string) => {
+    setLocalStorageDebounced.current("code", payload);
+    setCode(payload);
+  };
+
+  const handleReceiveInput = (payload: string) => {
+    setLocalStorageDebounced.current("input", payload);
+    setInput(payload);
+  };
+
+  const handleReceiveOutput = (payload: string) => {
+    setLocalStorage("output", payload);
+    setOutput(payload);
+  };
+
+  const handleRecieveStatesFromSockets = (payload: PayloadForNewUser) => {
+    const { code, input, output, selectedLanguage } = payload;
+    setInput(input);
+    setOutput(output);
+    setCode(code);
+    setSelectedLanguage(selectedLanguage);
+  };
+
+  const handleRecieveModeChange = (payload: LanguageType) => {
+    setLocalStorage("selectedLanguage", payload);
+    setSelectedLanguage(payload);
+  };
+
+  const handleChangeCode = (value: string) => {
+    setCode(value);
+    setLocalStorageDebounced.current("code", value);
+    socket.emit("code change", value);
+  };
+  const handleChangeInput = (value: string) => {
+    setInput(value);
+    setLocalStorageDebounced.current("input", value);
+    socket.emit("input change", value);
+  };
+  const handleChangeOutput = (value: string) => {
+    setOutput(value);
+    setLocalStorage("output", value);
+    socket.emit("output change", value);
+  };
+  const handleChangeLanguage = (value: LanguageType) => {
+    setSelectedLanguage(value);
+    setLocalStorage("selectedLanguage", value);
+    socket.emit("mode-change-send", value);
+  };
+
+  const sendDatatoNewUser = () => {
+    const data: PayloadForNewUser = {
+      code: code,
+      input: input,
+      output: output,
+      selectedLanguage: selectedLanguage,
+    };
+    socket.emit("data-for-new-user", data);
+  };
+
+  const resetEditorForMe = () => {
+    setCode(defaultJavaCode), setInput(""), setOutput("");
+    setSelectedTheme("githubDark");
+    deleteLocalStorage("code");
+    deleteLocalStorage("input");
+    deleteLocalStorage("output");
+    deleteLocalStorage("selectedLanguage");
+  };
 
   const handleRunClick = async () => {
     setExecutionInProgress(true);
@@ -160,6 +254,7 @@ const Editor = ({ socket }: { socket: Socket }) => {
       if (data.stderr) output += data.stderr;
       if (data.build_stderr) output += data.build_stderr;
       setOutput(output);
+      handleChangeOutput(output);
     };
 
     request(10, callback);
@@ -185,15 +280,15 @@ const Editor = ({ socket }: { socket: Socket }) => {
               request(--retries, callback);
             } else {
               // no retries left, calling callback with error
-              callback([], "out of retries");
+              callback("", "out of retries");
             }
           }
         })
-        .catch((error) => {
+        .catch((error: any) => {
           if (retries > 0) {
             request(--retries, callback);
           } else {
-            callback([], error);
+            callback("", error);
           }
         });
     }
@@ -206,9 +301,10 @@ const Editor = ({ socket }: { socket: Socket }) => {
           selectedLanguage,
           selectedTheme,
           executionInProgress,
-          setSelectedLanguage,
+          setSelectedLanguage: handleChangeLanguage,
           setSelectedTheme,
           handleRunClick,
+          resetEditorForMe,
         }}
       />
       <PanelGroup autoSaveId="example" direction="horizontal">
@@ -228,7 +324,7 @@ const Editor = ({ socket }: { socket: Socket }) => {
               <CodeMirror
                 placeholder={"Enter your input values, one per line, if any"}
                 value={input}
-                onChange={(value: any) => setInput(value)}
+                onChange={(value: any) => handleChangeInput(value)}
                 extensions={[]}
                 theme={extensionTheme}
                 height="400px"
