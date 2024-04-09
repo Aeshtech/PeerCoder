@@ -47,7 +47,7 @@ export const debounce = <F extends (...args: any[]) => any>(
   func: F,
   waitFor: number
 ) => {
-  let timeout: NodeJS.Timeout | null = null; // Store timeout reference
+  let timeout: any = null; // Store timeout reference
 
   return (...args: Parameters<F>): void => {
     // Return a function for direct calls
@@ -85,4 +85,18 @@ export function deleteLocalStorage(key: string): void {
   } catch (error) {
     console.error("Error deleting code from local storage:", error);
   }
+}
+
+export function validateName(name: string) {
+  // Regular expression to match alphabetical characters and spaces
+  const regex = /^[A-Za-z ]{2,30}$/;
+
+  // Remove leading and trailing spaces
+  const trimmedName = name.trim();
+  // Check if the name is empty or exceeds the character limit
+  if (trimmedName.length <= 2 || trimmedName.length > 30) {
+    return false;
+  }
+  // Check if the name matches the regular expression
+  return regex.test(trimmedName);
 }
