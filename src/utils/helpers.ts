@@ -1,8 +1,7 @@
 import toast from "react-hot-toast";
+import { PeersType } from "../App";
 
-export function filterUniqueUsers(
-  data: Array<{ userId: string; stream: MediaStream }>
-) {
+export function filterUniqueUsers(data: PeersType) {
   // Create a Set to store unique user IDs
   const seenUsers = new Set();
   // Initialize an empty array to store filtered data
@@ -87,7 +86,7 @@ export function deleteLocalStorage(key: string): void {
   }
 }
 
-export function validateName(name: string) {
+export function validateName(name: string): { verified: boolean; err: string } {
   // Regular expression to match alphabetical characters and spaces
   const regex = /^[A-Za-z ]{2,30}$/;
 
@@ -95,8 +94,15 @@ export function validateName(name: string) {
   const trimmedName = name.trim();
   // Check if the name is empty or exceeds the character limit
   if (trimmedName.length <= 2 || trimmedName.length > 30) {
-    return false;
+    return { verified: false, err: "Name must contain min 2 and max 30 chars" };
   }
   // Check if the name matches the regular expression
-  return regex.test(trimmedName);
+  const result = regex.test(trimmedName);
+  if (!result) {
+    return {
+      verified: false,
+      err: "Name must contain only alphabetical characters.",
+    };
+  }
+  return { verified: true, err: "" };
 }

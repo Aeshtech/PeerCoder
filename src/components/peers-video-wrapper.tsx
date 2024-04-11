@@ -18,7 +18,7 @@ const PeersVideoWrapper = ({
       {peers.map((peer, index) => (
         <Video
           key={index}
-          media={peer.stream}
+          peer={peer}
           muted={userId === peer.userId ? true : false}
         ></Video>
       ))}

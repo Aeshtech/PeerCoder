@@ -126,13 +126,23 @@ const Editor = ({ socket }: { socket: Socket }) => {
   //----------editor related listenres-----------
 
   // Set up socket event listener when the component mounts
+
   useEffect(() => {
+    const handleSendDatatoNewUser = () => {
+      const data: PayloadForNewUser = {
+        code: code,
+        input: input,
+        output: output,
+        selectedLanguage: selectedLanguage,
+      };
+      socket.emit("data-for-new-user", data);
+    };
     socket.on("receive code", handleReceiveCode);
     socket.on("receive input", handleReceiveInput);
     socket.on("receive output", handleReceiveOutput);
     socket.on("mode-change-receive", handleRecieveModeChange);
     socket.on("receive-data-for-new-user", handleRecieveStatesFromSockets);
-    socket.on("user-connected", sendDatatoNewUser);
+    socket.on("user-connected", handleSendDatatoNewUser);
 
     return () => {
       socket.off("receive code", handleReceiveCode);
@@ -140,9 +150,9 @@ const Editor = ({ socket }: { socket: Socket }) => {
       socket.off("receive output", handleReceiveOutput);
       socket.off("mode-change-receive", handleRecieveModeChange);
       socket.off("receive-data-for-new-user", handleRecieveStatesFromSockets);
-      socket.off("user-connected", sendDatatoNewUser);
+      socket.off("user-connected", handleSendDatatoNewUser);
     };
-  }, [code, input, output, selectedLanguage]);
+  }, [code, input, output, selectedLanguage, socket]);
 
   // ------------------handlers--------------------
 
@@ -199,16 +209,6 @@ const Editor = ({ socket }: { socket: Socket }) => {
     socket.emit("mode-change-send", value);
   };
 
-  const sendDatatoNewUser = () => {
-    const data: PayloadForNewUser = {
-      code: code,
-      input: input,
-      output: output,
-      selectedLanguage: selectedLanguage,
-    };
-    socket.emit("data-for-new-user", data);
-  };
-
   const resetEditorForMe = () => {
     setCode(defaultJavaCode), setInput(""), setOutput("");
     setSelectedTheme("githubDark");
@@ -243,7 +243,7 @@ const Editor = ({ socket }: { socket: Socket }) => {
       id: data?.id,
       api_key: "guest",
     });
-    var callback = (data: any, error: any) => {
+    const callback = (data: any, error: any) => {
       setExecutionInProgress(false);
       if (error) {
         console.error(error);

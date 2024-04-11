@@ -2,14 +2,16 @@ import { useCallback, useEffect, useState } from "react";
 import "./global.css";
 import Peer, { MediaConnection } from "peerjs";
 import io from "socket.io-client";
-import { filterUniqueUsers } from "./utils/helpers";
+import { filterUniqueUsers, getLocalStorage } from "./utils/helpers";
 import toast from "react-hot-toast";
 import Editor from "./components/editor";
 import Header from "./components/header";
 import PeersVideoWrapper from "./components/peers-video-wrapper";
+import UserNameModal from "./components/modals/user-name.modal";
 
 export type PeersType = Array<{
   userId: string;
+  userName: string;
   stream: MediaStream;
 }>;
 //creating peer instance and configuring the iceServers
@@ -29,54 +31,68 @@ const myPeer = new Peer({
 });
 
 //https://peer-coder.onrender.com
-const socket = io("https://peer-coder.onrender.com");
+const socket = io("http://localhost:4000");
 const peersObj: { [key: string]: MediaConnection } = {};
 
 function App({ roomId }: { roomId: string }) {
   const [userId, setUserId] = useState(""); //representing my peer id
   const [peers, setPeers] = useState<PeersType>([]);
-  // const streamRef = useRef<MediaStream | undefined>();
+  const [userName, setUserName] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  console.log({ peers });
   const addVideoStream = useCallback(
-    ({ peerId, stream }: { peerId: string; stream: MediaStream }) => {
+    ({
+      peerId,
+      stream,
+      userName,
+    }: {
+      peerId: string;
+      stream: MediaStream;
+      userName: string;
+    }) => {
       //if peerId match with my userId then disable the vidoe & audio tracks for me to prevent from echo
-      if (userId === peerId) {
-        stream.getVideoTracks()[0].enabled = false;
-        stream.getAudioTracks()[0].enabled = false;
-      }
+      // if (userId === peerId) {
+      //   stream.getVideoTracks()[0].enabled = false;
+      //   stream.getAudioTracks()[0].enabled = false;
+      // }
+
       //functional update is neccessary to get latest peers
       setPeers((prevPeers) => {
-        let found = false;
-        //just update the stream if peer userid match with my user id else return as it is.
-        const updatedPeers = prevPeers.map((peer) => {
-          if (peer.userId === userId) {
-            found = true;
-            return { ...peer, stream };
+        let flag = false;
+        const updatedPeers = prevPeers.map((item) => {
+          //if prevPeer item contain userId match with incoming peerId then update its stream and mark falg = true
+          //which will prevent it from adding again into list
+          if (item.userId === peerId) {
+            flag = true;
+            return { ...item, stream };
           }
-          return peer;
+          return item;
         });
-        //if its a new peer then add into list including its incoming stream
-        if (!found) {
-          updatedPeers.push({ userId: peerId, stream });
+
+        //add new peer into list including its incoming stream and name
+        if (!flag) {
+          updatedPeers.push({ userId: peerId, stream, userName });
         }
-        //filtering the duplicatee peers if any before set into peers
+        //filtering if there any duplicatee peers in list before updating setPeers
         const filteredUpdatedPeers = filterUniqueUsers(updatedPeers);
         return filteredUpdatedPeers;
       });
     },
-    [userId]
+    []
   );
 
   const connectToNewUser = useCallback(
-    (remotePeerId: string, stream: MediaStream) => {
+    (remotePeerId: string, stream: MediaStream, remoteUserName: string) => {
       //call to the new user using its id and send our stream
-      const call = myPeer.call(remotePeerId, stream);
+      const call = myPeer.call(remotePeerId, stream, {
+        metadata: { remoteUserName },
+      });
       //Listen for remote peer adds a stream.
-      call.on("stream", (remoteVideoStream) => {
+      call.on("stream", (remoteVideoStream: MediaStream) => {
         addVideoStream({
           peerId: remotePeerId,
           stream: remoteVideoStream,
+          userName: remoteUserName,
         });
       });
       //listen either me or remote user closes the media connection then filter out the remote user
@@ -84,10 +100,6 @@ function App({ roomId }: { roomId: string }) {
         setPeers((prevPeers) =>
           prevPeers.filter((peer) => peer.userId !== remotePeerId)
         );
-        toast("Peer Connection Closed!", {
-          icon: "🧑‍💻",
-          id: "peer-connection-closed",
-        });
       });
       peersObj[remotePeerId] = call;
     },
@@ -96,30 +108,42 @@ function App({ roomId }: { roomId: string }) {
 
   useEffect(() => {
     //Emitted when a connection to the PeerServer is established
-    myPeer.on("open", (id) => {
+
+    myPeer.on("open", (id: string) => {
+      setUserId(id);
+    });
+    const initialUserName = getLocalStorage("userName") || "";
+    if (!initialUserName) {
+      setIsModalOpen(true);
+    } else {
+      setUserName(initialUserName);
+    }
+    if (initialUserName && userId && roomId) {
       //emits join room with roomId and the my peer id, emitting out of navigator so,
       //that remote user should connected even if he denies for camera/audio
-      socket.emit("join-room", roomId, id);
-
       if (navigator) {
         navigator.mediaDevices
           .getUserMedia({ video: true, audio: true })
           .then((stream: MediaStream) => {
-            setUserId(id);
             //add my peerId and stream to list of peers
-            addVideoStream({ peerId: id, stream });
+            addVideoStream({
+              peerId: userId,
+              stream,
+              userName: initialUserName,
+            });
 
-            //when new user connected then call it by provding my stream
-            socket.on("user-connected", (userId) => {
-              toast("New Peer Connected!", {
+            // when new user connected then call it by provding my stream
+            socket.on("user-connected", (remoteUserId, remoteUserName) => {
+              toast(`${remoteUserName} Joined!`, {
                 icon: "🧑‍💻",
                 id: "peer-connected",
               });
-              connectToNewUser(userId, stream);
+              connectToNewUser(remoteUserId, stream, remoteUserName);
             });
 
             //listen when remote peers's tries to call me
-            myPeer.on("call", (call) => {
+            myPeer.on("call", (call: MediaConnection) => {
+              const { remoteUserName = "" } = call.metadata;
               //answer the call by providing my stream
               call.answer(stream);
               //listen if getting stream from remote
@@ -127,14 +151,11 @@ function App({ roomId }: { roomId: string }) {
                 addVideoStream({
                   peerId: call.peer,
                   stream: userVideoStream,
+                  userName: remoteUserName,
                 });
               });
               //emitted either me or remote user closes the mediaconnection then filter out the remote user
               call.on("close", () => {
-                toast("Peer Connection Closed!", {
-                  icon: "🧑‍💻",
-                  id: "peer-connection-closed",
-                });
                 setPeers((prevPeers) =>
                   prevPeers.filter((peer) => peer.userId !== call.peer)
                 );
@@ -142,12 +163,12 @@ function App({ roomId }: { roomId: string }) {
               peersObj[call.peer] = call;
             });
             //emits join room with roomId and the my peer
-            socket.emit("join-room", roomId, id);
+            socket.emit("join-room", roomId, userId, initialUserName);
           })
           .catch((err) => {
             if (err.name === "NotAllowedError") {
               toast.error(
-                "Permission denied. Please allow your camera and microphone permission."
+                "Permission denied. Please allow your camera and microphone permission required to work for PeerCoder."
               );
             } else if (err.name === "NotFoundError") {
               toast.error(
@@ -165,12 +186,15 @@ function App({ roomId }: { roomId: string }) {
       } else {
         console.error("navigator.mediaDevices is not supported");
       }
-    });
-
-    socket.on("user-disconnected", (userId) => {
-      if (peersObj[userId]) peersObj[userId].close();
-    });
-  }, [addVideoStream, connectToNewUser, peers, roomId, userId]);
+      socket.on("user-disconnected", (userId, userName) => {
+        toast(`${userName} disconnected`, {
+          icon: "🧑‍💻",
+          id: "peer-connection-closed",
+        });
+        if (peersObj[userId]) peersObj[userId].close();
+      });
+    }
+  }, [addVideoStream, connectToNewUser, roomId, userId, isModalOpen]);
 
   const handleVideoToggle = (userId: string) => {
     setPeers((prevPeers) =>
@@ -207,13 +231,20 @@ function App({ roomId }: { roomId: string }) {
       }}
     >
       <Header
-        roomId={roomId}
+        userName={userName}
+        setIsModalOpen={setIsModalOpen}
         myPeerId={userId}
         handleVideoToggle={handleVideoToggle}
         handleAudioToggle={handleAudioToggle}
       />
       <PeersVideoWrapper peers={peers} userId={userId} />
       <Editor socket={socket} />
+      <UserNameModal
+        setIsModalOpen={setIsModalOpen}
+        isModalOpen={isModalOpen}
+        userName={userName}
+        setUserName={setUserName}
+      />
     </main>
   );
 }

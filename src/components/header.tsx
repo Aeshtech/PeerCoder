@@ -1,17 +1,25 @@
 import { useState } from "react";
-import { CameraOffSVG, CameraOnSVG, MicOffSVG, MicOnSVG } from "./icons";
+import {
+  CameraOffSVG,
+  CameraOnSVG,
+  EditSVG,
+  MicOffSVG,
+  MicOnSVG,
+} from "./svg-icons";
 import { writeClipboardText } from "../utils/helpers";
 
 const Header = ({
+  userName,
   myPeerId,
-  roomId,
   handleVideoToggle,
   handleAudioToggle,
+  setIsModalOpen,
 }: {
+  userName: string;
   myPeerId: string;
-  roomId: string;
   handleVideoToggle: (userId: string) => void;
   handleAudioToggle: (userId: string) => void;
+  setIsModalOpen: (value: boolean) => void;
 }) => {
   const [isCameraOn, setCameraOn] = useState(true);
   const [isMicOn, setMicOn] = useState(true);
@@ -26,8 +34,9 @@ const Header = ({
       <div>
         <h1 className="logo text-blackWhite text-2xl">PeerCoder</h1>
       </div>
-      <div className="flex gap-x-[15px]">
+      <div className="flex items-center gap-x-[15px]">
         <button
+          title="Toggle Mic"
           className={`w-[40px] h-[40px] rounded-full flex-center border-[1px] border-[#ffffff1f] ${
             !isMicOn && "bg-[#8b0000]"
           }`}
@@ -42,6 +51,7 @@ const Header = ({
           {isMicOn ? <MicOnSVG fill="white" /> : <MicOffSVG fill="white" />}
         </button>
         <button
+          title="Toggle Camera"
           className={`w-[40px] h-[40px] ml-[10px] rounded-full flex-center border-[1px] border-[#ffffff1f] ${
             !isCameraOn && "bg-[#8b0000]"
           }`}
@@ -59,8 +69,20 @@ const Header = ({
             <CameraOffSVG fill="white" />
           )}
         </button>
+        <div className="flex gap-x-[7px] overflow-hidden w-[170px]">
+          <h5 className="text-white truncate">{userName}</h5>
+          <button
+            title="Edit Name"
+            className="h-7 w-7 rounded-full hover:bg-gray-500 flex-center shrink-0"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <EditSVG className="text-white w-4" />
+          </button>
+        </div>
       </div>
+
       <button
+        title="Copy and share the URL to invite in the room"
         className="px-[10px] py-[5px] text-white flex-center rounded-[5px] border-[1px] border-[#ffffff1f] active:bg-[green]"
         style={{ boxShadow: "0 0 5px #171716e3" }}
         onClick={() => writeClipboardText(window.location.href)}
