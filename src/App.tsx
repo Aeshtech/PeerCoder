@@ -29,8 +29,7 @@ const myPeer = new Peer({
     ],
   },
 });
-// https://peercoder-backend.onrender.com/
-const socket = io("http://localhost:4000/");
+const socket = io("https://peercoder-backend.onrender.com/");
 const peersObj: { [key: string]: MediaConnection } = {};
 
 function App({ roomId }: { roomId: string }) {
