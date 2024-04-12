@@ -29,8 +29,8 @@ const myPeer = new Peer({
     ],
   },
 });
-
-const socket = io("https://peercoder-backend.onrender.com/");
+// https://peercoder-backend.onrender.com/
+const socket = io("http://localhost:4000/");
 const peersObj: { [key: string]: MediaConnection } = {};
 
 function App({ roomId }: { roomId: string }) {
@@ -81,10 +81,20 @@ function App({ roomId }: { roomId: string }) {
   );
 
   const connectToNewUser = useCallback(
-    (remotePeerId: string, stream: MediaStream, remoteUserName: string) => {
-      //call to the new user using its id and send our stream
-      const call = myPeer.call(remotePeerId, stream, {
-        metadata: { remoteUserName },
+    ({
+      remotePeerId,
+      myStream,
+      myUserName,
+      remoteUserName,
+    }: {
+      remotePeerId: string;
+      myStream: MediaStream;
+      myUserName: string;
+      remoteUserName: string;
+    }) => {
+      //call to the new user using its id by provding  myStream and myUserName
+      const call = myPeer.call(remotePeerId, myStream, {
+        metadata: { myUserName },
       });
       //Listen for remote peer adds a stream.
       call.on("stream", (remoteVideoStream: MediaStream) => {
@@ -132,25 +142,30 @@ function App({ roomId }: { roomId: string }) {
             });
 
             // when new user connected then call it by provding my stream
-            socket.on("user-connected", (remoteUserId, remoteUserName) => {
+            socket.on("user-connected", (remotePeerId, remoteUserName) => {
               toast(`${remoteUserName} Joined!`, {
                 icon: "🧑‍💻",
                 id: "peer-connected",
               });
-              connectToNewUser(remoteUserId, stream, remoteUserName);
+              connectToNewUser({
+                remotePeerId,
+                myStream: stream,
+                myUserName: initialUserName,
+                remoteUserName,
+              });
             });
 
             //listen when remote peers's tries to call me
             myPeer.on("call", (call: MediaConnection) => {
-              const { remoteUserName = "" } = call.metadata;
+              const { myUserName = "" } = call.metadata;
               //answer the call by providing my stream
               call.answer(stream);
               //listen if getting stream from remote
-              call.on("stream", (userVideoStream) => {
+              call.on("stream", (userVideoStream: MediaStream) => {
                 addVideoStream({
                   peerId: call.peer,
                   stream: userVideoStream,
-                  userName: remoteUserName,
+                  userName: myUserName,
                 });
               });
               //emitted either me or remote user closes the mediaconnection then filter out the remote user
