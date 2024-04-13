@@ -8,6 +8,7 @@ import Editor from "./components/editor";
 import Header from "./components/header";
 import PeersVideoWrapper from "./components/peers-video-wrapper";
 import UserNameModal from "./components/modals/user-name.modal";
+import { useNavigate } from "react-router-dom";
 
 export type PeersType = Array<{
   userId: string;
@@ -38,6 +39,7 @@ function App({ roomId }: { roomId: string }) {
   const [userName, setUserName] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const navigate = useNavigate();
   const addVideoStream = useCallback(
     ({
       peerId,
@@ -62,7 +64,7 @@ function App({ roomId }: { roomId: string }) {
           //which will prevent it from adding again into list
           if (item.userId === peerId) {
             flag = true;
-            return { ...item, stream };
+            return { ...item, stream, userName };
           }
           return item;
         });
@@ -235,6 +237,12 @@ function App({ roomId }: { roomId: string }) {
     );
   };
 
+  function handleEndCall() {
+    myPeer.disconnect();
+    socket.disconnect();
+    navigate("/thanks", { replace: true });
+  }
+
   return (
     <main
       className="border-[0px] border-[#ffffff80] rounded-t-[10px] backdrop-blur-[8px]"
@@ -244,6 +252,7 @@ function App({ roomId }: { roomId: string }) {
       }}
     >
       <Header
+        handleEndCall={handleEndCall}
         userName={userName}
         setIsModalOpen={setIsModalOpen}
         myPeerId={userId}

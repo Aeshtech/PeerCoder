@@ -28,8 +28,9 @@ const EditorToolbar = ({ config }: { config: EditorToolbarType }) => {
           onChange={(e: any) =>
             setSelectedLanguage(e.target.value as LanguageType)
           }
-          className="bg-transparent text-white min-w-[140px] h-[35px] rounded-[5px] outline-none cursor-pointer border-[1px] border-[#ffffff1f]"
+          className="text-white min-w-[140px] px-[5px] h-[35px] rounded-[5px] outline-none cursor-pointer border-[1px] bg-[#ffffff1f]"
         >
+          <option value="java">Programming Language</option>
           <option value="java">Java</option>
           <option value="python">Python</option>
           <option value="c">C</option>
@@ -40,9 +41,9 @@ const EditorToolbar = ({ config }: { config: EditorToolbarType }) => {
           title="Select Editor Theme"
           value={selectedTheme}
           onChange={(e: any) => setSelectedTheme(e.target.value as ThemeType)}
-          className="bg-transparent text-white min-w-[140px] h-[35px] rounded-[5px] outline-none cursor-pointer border-[1px] border-[#ffffff1f]"
+          className="text-white min-w-[140px] px-[5px] h-[35px] rounded-[5px] outline-none cursor-pointer border-[1px] bg-[#ffffff1f]"
         >
-          <option value="abcdef">Abcdef</option>
+          <option value="githubDark">Select Editor Theme</option>
           <option value="atomone">Atom One</option>
           <option value="androidstudio">Android Studio</option>
           <option value="basicLight">Basic Light</option>
@@ -59,7 +60,7 @@ const EditorToolbar = ({ config }: { config: EditorToolbarType }) => {
             );
             if (res) resetEditorForMe();
           }}
-          className="codeRunBtn border-[1px] border-[#ffffff1f] bg-transparent text-white rounded-[5px] outline-none flex-center px-[10px] h-[35px] active:scale-[0.97]"
+          className="codeRunBtn border-[1px] bg-[#ffffff1f] text-white rounded-[5px] outline-none flex-center px-[10px] h-[35px] active:scale-[0.97]"
         >
           Reset My Editor
         </button>
@@ -69,7 +70,7 @@ const EditorToolbar = ({ config }: { config: EditorToolbarType }) => {
           title="Run the Code"
           onClick={handleRunClick}
           disabled={executionInProgress}
-          className={`codeRunBtn border-[1px] border-[#ffffff1f] bg-transparent text-white rounded-[5px] outline-none flex-center px-[10px] h-[35px] active:scale-[0.97] ${
+          className={`codeRunBtn border-[1px] bg-[#ffffff1f] text-white rounded-[5px] outline-none flex-center px-[10px] h-[35px] active:scale-[0.97] ${
             executionInProgress && "cursor-not-allowed"
           }`}
         >

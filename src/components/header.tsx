@@ -14,12 +14,14 @@ const Header = ({
   handleVideoToggle,
   handleAudioToggle,
   setIsModalOpen,
+  handleEndCall,
 }: {
   userName: string;
   myPeerId: string;
   handleVideoToggle: (userId: string) => void;
   handleAudioToggle: (userId: string) => void;
   setIsModalOpen: (value: boolean) => void;
+  handleEndCall: () => void;
 }) => {
   const [isCameraOn, setCameraOn] = useState(true);
   const [isMicOn, setMicOn] = useState(true);
@@ -32,7 +34,7 @@ const Header = ({
       }}
     >
       <div>
-        <h1 className="logo text-blackWhite text-2xl">PeerCoder</h1>
+        <h1 className="logo text-blackWhite text-2xl text-white">PeerCoder</h1>
       </div>
       <div className="flex items-center gap-x-[15px]">
         <button
@@ -72,7 +74,7 @@ const Header = ({
         <div className="flex gap-x-[7px] overflow-hidden w-[170px]">
           <h5 className="text-white truncate">{userName}</h5>
           <button
-            title="Edit Name"
+            title="Update Name"
             className="h-7 w-7 rounded-full hover:bg-gray-500 flex-center shrink-0"
             onClick={() => setIsModalOpen(true)}
           >
@@ -80,15 +82,34 @@ const Header = ({
           </button>
         </div>
       </div>
-
-      <button
-        title="Copy and share the URL to invite in the room"
-        className="px-[10px] py-[5px] text-white flex-center rounded-[5px] border-[1px] border-[#ffffff1f] active:bg-[green]"
-        style={{ boxShadow: "0 0 5px #171716e3" }}
-        onClick={() => writeClipboardText(window.location.href)}
-      >
-        Copy Room URL
-      </button>
+      <div className="flex gap-x-[20px]">
+        <button
+          title="Copy and share the URL to invite in the room"
+          className="px-[10px] py-[5px] text-white flex-center rounded-[20px] border-[1px] bg-[#8d2626] active:border-[red]"
+          style={{ boxShadow: "0 0 5px #171716e3" }}
+          onClick={() => {
+            if (confirm("Are you sure to end the call ?")) handleEndCall();
+          }}
+        >
+          End Call
+        </button>
+        <button
+          title="Copy and share the URL to invite in the room"
+          className="px-[10px] py-[5px] text-white flex-center rounded-[5px] border-[1px] bg-[#ffffff1f] active:bg-[green]"
+          style={{ boxShadow: "0 0 5px #171716e3" }}
+          onClick={() => window.open("/", "_blank")}
+        >
+          Create New Room
+        </button>
+        <button
+          title="Copy and share the URL to invite in the room"
+          className="px-[10px] py-[5px] text-white flex-center rounded-[5px] border-[1px] bg-[#ffffff1f] active:bg-[green]"
+          style={{ boxShadow: "0 0 5px #171716e3" }}
+          onClick={() => writeClipboardText(window.location.href)}
+        >
+          Copy Room URL
+        </button>
+      </div>
     </header>
   );
 };

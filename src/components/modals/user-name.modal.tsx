@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { setLocalStorage, validateName } from "../../utils/helpers";
+// import { useNavigate } from "react-router-dom";
 type PropsType = {
   isModalOpen: boolean;
   userName: string;
@@ -13,6 +14,7 @@ const UserNameModal = ({
   setUserName,
 }: PropsType) => {
   const [err, setErr] = useState("");
+  // const navigate = useNavigate();
   if (!isModalOpen) {
     return;
   }
@@ -20,10 +22,10 @@ const UserNameModal = ({
   const handleJoinRoom = () => {
     const { verified, err } = validateName(userName);
     if (verified) {
-      setIsModalOpen(false);
       setErr("");
       setUserName(userName);
       setLocalStorage("userName", userName);
+      setIsModalOpen(false);
     } else {
       setErr(err);
     }

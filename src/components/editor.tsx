@@ -30,6 +30,7 @@ import {
   getLocalStorage,
   setLocalStorage,
 } from "../utils/helpers";
+import toast from "react-hot-toast";
 
 export type LanguageType = "java" | "python" | "c" | "cpp";
 export type ThemeType =
@@ -77,6 +78,7 @@ const Editor = ({ socket }: { socket: Socket }) => {
   const extensionLanguage = (languages as any)[selectedLanguage];
   const extensionTheme = (themes as any)[selectedTheme];
   const setLocalStorageDebounced = useRef(debounce(setLocalStorage, 300));
+  const [isReceivingCode, setIsReceivingCode] = useState(false);
 
   useEffect(() => {
     let flag = true;
@@ -157,8 +159,10 @@ const Editor = ({ socket }: { socket: Socket }) => {
   // ------------------handlers--------------------
 
   const handleReceiveCode = (payload: string) => {
+    setIsReceivingCode(true); // Set flag to true when receiving code
     setLocalStorageDebounced.current("code", payload);
     setCode(payload);
+    setIsReceivingCode(false); // Reset flag after processing
   };
 
   const handleReceiveInput = (payload: string) => {
@@ -189,9 +193,14 @@ const Editor = ({ socket }: { socket: Socket }) => {
   };
 
   const handleChangeCode = (value: string) => {
-    setCode(value);
-    setLocalStorageDebounced.current("code", value);
-    socket.emit("code change", value);
+    if (!isReceivingCode) {
+      // Only run if not receiving code just to prevent conflicts
+      setCode(value);
+      setLocalStorageDebounced.current("code", value);
+      socket.emit("code change", value);
+    } else {
+      toast.error("Only one user can type at a time", { id: "code-change" });
+    }
   };
   const handleChangeInput = (value: string) => {
     setInput(value);
