@@ -1,30 +1,47 @@
-# React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# PeerCoder
 
-Currently, two official plugins are available:
+Welcome👏 to PeerCoder🎯🧑🏻‍🤝‍🧑
+PeerCoder is a real-time⌛ collaboration platform📌 that enables live video/audio📽️🎧🎙️ coding, where 
+you can invite and connect🤝 with other peers and Practise🏋️‍♀️ Coding to prepare for the interviews
+and exams in the various popular coding languages like C, C++, Python, Java.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Brainstorm coding problems together with peers through video chat anwhere in the world🌏.
+Happy Coding🍵🧑‍💻
+©️ Designed and Developed by Ashish Sharma😊 
 
-## Expanding the ESLint configuration
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+Follow me on [Linkedin](https://linkedin.com/in/aeshtech), [Portfolio](https://aeshtech.netlify.app)
 
-- Configure the top-level `parserOptions` property like this:
+## Live
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
+Go to live : [PeerCoder](https://peercoders.netlify.app/)
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+
+## Screenshots
+
+![App Screenshot](https://via.placeholder.com/468x300?text=App+Screenshot+Here)
+
+
+## Tech Stack
+
+**Client:** React, TailwindCSS, Socket.io-client, Peerjs
+
+**Server:** Express, Socket.io
+
+**Architecture:** Mesh Topology using WebRTC
+
+## Authors
+
+- [@Ashish Sharma](https://aeshtech.netlify.app)
+
+
+## Feedback
+
+If you have any feedback, please reach out to us at dev.aeshtech@gmail.com
+
+
+## Support
+
+For support, email dev.aeshtech@gmail.com or join me on [Linkedin](https://linkedin.com/in/aeshtech).
+

@@ -33,7 +33,7 @@ const PeersVideoWrapper = ({
         }}
       >
         <div className="flex-center mt-[10px]">
-          <div className="grid grid-cols-2 gap-[10px] gap-x-[20px]">
+          <div className="grid grid-cols-3 gap-[10px] gap-x-[10px]">
             <Link to={"https://linkedin.com/in/aeshtech"} target="_blank">
               <img src="/images/linkedin.png" className="w-auto h-[40px]" />
             </Link>
@@ -48,6 +48,12 @@ const PeersVideoWrapper = ({
             </Link>
             <Link to={"https://instagram.com/aeshtech11"} target="_blank">
               <img src="/images/instagram.png" className="w-auto h-[40px]" />
+            </Link>
+            <Link to={"https://aeshtech.netlify.app"} target="_blank">
+              <img
+                src="/images/aeshtech-icon.png"
+                className="w-auto h-[40px] bg-white rounded-[2px]"
+              />
             </Link>
           </div>
         </div>

@@ -28,6 +28,12 @@ const Footer = ({ className }: { className?: string }) => {
         <Link to={"https://instagram.com/aeshtech11"} target="_blank">
           <img src="/images/instagram.png" className="w-auto h-[50px]" />
         </Link>
+        <Link to={"https://aeshtech.netlify.app"} target="_blank">
+          <img
+            src="/images/aeshtech-icon.png"
+            className="w-auto h-[45px] bg-white rounded-[2px]"
+          />
+        </Link>
       </div>
     </div>
   );
