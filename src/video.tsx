@@ -19,7 +19,7 @@ export const Video = ({
     }
   }, [peer.stream]);
   return (
-    <div className="relative">
+    <div className="relative shrink-0">
       <video
         height={300}
         muted={muted}

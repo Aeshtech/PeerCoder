@@ -7,9 +7,9 @@ import {
   Routes,
 } from "react-router-dom";
 import { v4 as uuidV4 } from "uuid";
-import Room from "./room.tsx";
 import { Toaster } from "react-hot-toast";
 import CallEnd from "./call-end.tsx";
+import App from "./App.tsx";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   // <React.StrictMode>
   <>
@@ -17,7 +17,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <Router>
       <Routes>
         <Route path="/" element={<Navigate to={"/" + uuidV4()} />} />
-        <Route path="/:roomId" element={<Room />} />
+        <Route path="/:roomId" element={<App />} />
         <Route path="/thanks" element={<CallEnd />} />
       </Routes>
     </Router>

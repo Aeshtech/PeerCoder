@@ -8,7 +8,11 @@ import Editor from "./components/editor";
 import Header from "./components/header";
 import PeersVideoWrapper from "./components/peers-video-wrapper";
 import UserNameModal from "./components/modals/user-name.modal";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import ReactGA from "react-ga";
+import { TRACKING_ID } from "./utils/constants";
+import Footer from "./components/footer";
+ReactGA.initialize(TRACKING_ID);
 
 export type PeersType = Array<{
   userId: string;
@@ -33,7 +37,8 @@ const myPeer = new Peer({
 const socket = io("https://peercoder-backend.onrender.com/");
 const peersObj: { [key: string]: MediaConnection } = {};
 
-function App({ roomId }: { roomId: string }) {
+function App() {
+  const { roomId } = useParams();
   const [userId, setUserId] = useState(""); //representing my peer id
   const [peers, setPeers] = useState<PeersType>([]);
   const [userName, setUserName] = useState("");
@@ -243,6 +248,10 @@ function App({ roomId }: { roomId: string }) {
     navigate("/thanks", { replace: true });
   }
 
+  useEffect(() => {
+    ReactGA.pageview(window.location.pathname + window.location.search);
+  }, []);
+
   return (
     <main
       className="border-[0px] border-[#ffffff80] rounded-t-[10px] backdrop-blur-[8px]"
@@ -261,6 +270,7 @@ function App({ roomId }: { roomId: string }) {
       />
       <PeersVideoWrapper peers={peers} userId={userId} />
       <Editor socket={socket} />
+      <Footer />
       <UserNameModal
         setIsModalOpen={setIsModalOpen}
         isModalOpen={isModalOpen}

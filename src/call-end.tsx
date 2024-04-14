@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import Footer from "./components/footer";
 
 const CallEnd = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const CallEnd = () => {
           Create New Room
         </button>
       </div>
+      <Footer className="mt-[100px] rounded-t-[10px]" />
     </section>
   );
 };
