@@ -35,25 +35,19 @@ const PeersVideoWrapper = ({
         <div className="flex-center mt-[10px]">
           <div className="grid grid-cols-2 gap-[10px] gap-x-[20px]">
             <Link to={"https://linkedin.com/in/aeshtech"} target="_blank">
-              <img
-                src="/public/images/linkedin.png"
-                className="w-auto h-[40px]"
-              />
+              <img src="/images/linkedin.png" className="w-auto h-[40px]" />
             </Link>
             <Link to={"https://github.com/aeshtech"} target="_blank">
               <img
-                src="/public/images/github.png"
+                src="/images/github.png"
                 className="w-auto h-[40px] bg-white rounded-[10px]"
               />
             </Link>
             <Link to={"mailto:dev.aeshtech@gmail.com"} target="_blank">
-              <img src="/public/images/gmail.png" className="w-auto h-[40px]" />
+              <img src="/images/gmail.png" className="w-auto h-[40px]" />
             </Link>
             <Link to={"https://instagram.com/aeshtech11"} target="_blank">
-              <img
-                src="/public/images/instagram.png"
-                className="w-auto h-[40px]"
-              />
+              <img src="/images/instagram.png" className="w-auto h-[40px]" />
             </Link>
           </div>
         </div>

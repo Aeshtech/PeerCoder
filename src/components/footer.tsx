@@ -14,19 +14,19 @@ const Footer = ({ className }: { className?: string }) => {
       </address>
       <div className="flex items-center mx-auto gap-x-[50px] max-h-[50px]">
         <Link to={"https://linkedin.com/in/aeshtech"} target="_blank">
-          <img src="/public/images/linkedin.png" className="w-auto h-[50px]" />
+          <img src="/images/linkedin.png" className="w-auto h-[50px]" />
         </Link>
         <Link to={"https://github.com/aeshtech"} target="_blank">
           <img
-            src="/public/images/github.png"
+            src="/images/github.png"
             className="w-auto h-[50px] bg-white rounded-[10px]"
           />
         </Link>
         <Link to={"mailto:dev.aeshtech@gmail.com"} target="_blank">
-          <img src="/public/images/gmail.png" className="w-auto h-[60px]" />
+          <img src="/images/gmail.png" className="w-auto h-[60px]" />
         </Link>
         <Link to={"https://instagram.com/aeshtech11"} target="_blank">
-          <img src="/public/images/instagram.png" className="w-auto h-[50px]" />
+          <img src="/images/instagram.png" className="w-auto h-[50px]" />
         </Link>
       </div>
     </div>
