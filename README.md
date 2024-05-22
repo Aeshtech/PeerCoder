@@ -20,7 +20,7 @@ Go to live : [PeerCoder](https://peercoders.netlify.app/)
 
 ## Screenshots
 
-![App Screenshot](https://via.placeholder.com/468x300?text=App+Screenshot+Here)
+![App Screenshot]([https://via.placeholder.com/468x300?text=App+Screenshot+Here](https://res.cloudinary.com/dfnp5l2ik/image/upload/v1716407671/My%20Folder/bmkfo8g1yujapqhd7gwi.png))
 
 
 ## Tech Stack
