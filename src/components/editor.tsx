@@ -238,6 +238,7 @@ const Editor = ({ socket }: { socket: Socket }) => {
 
     const res = await fetch(`https://api.paiza.io/runners/create`, {
       method: "POST",
+      mode: 'no-cors', // This disables CORS
       body: JSON.stringify(body),
       headers: {
         "content-type": "application/json",
