@@ -23,6 +23,7 @@ import {
   defaultCPPCode,
   defaultJavaCode,
   defaultPythonCode,
+  defaultJSCode
 } from "../utils/defaults";
 import {
   debounce,
@@ -31,8 +32,9 @@ import {
   setLocalStorage,
 } from "../utils/helpers";
 import toast from "react-hot-toast";
+import { javascript } from "@codemirror/lang-javascript";
 
-export type LanguageType = "java" | "python" | "c" | "cpp";
+export type LanguageType = "java" | "python" | "c" | "cpp" | "javascript";
 export type ThemeType =
   | "abcdef"
   | "atomone"
@@ -54,7 +56,7 @@ const languages = {
   java: java(),
   c: cpp(),
   cpp: cpp(),
-  // javascript: javascript(),
+  javascript: javascript(),
 };
 const themes = {
   abcdef,
@@ -116,6 +118,9 @@ const Editor = ({ socket }: { socket: Socket }) => {
             break;
           case "python":
             setCode(defaultPythonCode);
+            break;
+          case "javascript":
+            setCode(defaultJSCode);
             break;
         }
       }
@@ -221,6 +226,7 @@ const Editor = ({ socket }: { socket: Socket }) => {
   const resetEditorForMe = () => {
     setCode(defaultJavaCode), setInput(""), setOutput("");
     setSelectedTheme("githubDark");
+    setSelectedLanguage("java");
     deleteLocalStorage("code");
     deleteLocalStorage("input");
     deleteLocalStorage("output");
@@ -229,80 +235,58 @@ const Editor = ({ socket }: { socket: Socket }) => {
 
   const handleRunClick = async () => {
     setExecutionInProgress(true);
-    const body = {
-      source_code: code,
-      language: selectedLanguage,
-      input,
-      api_key: "guest",
-    };
-
-    const res = await fetch(`https://api.paiza.io/runners/create`, {
-      method: "POST",
-      mode: 'no-cors', // This disables CORS
-      body: JSON.stringify(body),
-      headers: {
-        "content-type": "application/json",
+    // runtimes that supported by piston api platform 
+    const langRuntimeVersions = {
+      python: { version: "3.10.0"},
+      java: {
+        version: "15.0.2",
       },
-    });
-    if (!res.ok) {
-      throw new Error(`Something went wrong, status ${res.status}`);
-    }
-
-    const data = await res.json();
-    const query = new URLSearchParams({
-      id: data?.id,
-      api_key: "guest",
-    });
-    const callback = (data: any, error: any) => {
-      setExecutionInProgress(false);
-      if (error) {
-        console.error(error);
-        return;
+      c: {
+        version: "10.2.0",
+      },
+      cpp: {
+        version: "10.2.0",
+      },
+      javascript:{
+        version: "18.15.0"
       }
+    };
+    const { version } = langRuntimeVersions[selectedLanguage];
+  
+    // API Request Payload
+    const requestBody = {
+      language: selectedLanguage,
+      version,
+      files: [{ name: `main.${selectedLanguage === "python" ? "py" : selectedLanguage === "javascript" ? "js" : selectedLanguage}`, content: code }],
+    };
+  
+    try {
+      // Call Piston API
+      const response = await fetch("https://emkc.org/api/v2/piston/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+  
+      // Handle API response
+      const result = await response.json();
+      if (!response.ok) throw new Error(`API Error: ${result.error || "Unknown error"}`);
+  
+      // Return output or error
       let output = "";
-      if (data.stdout) output += data.stdout;
-      if (data.stderr) output += data.stderr;
-      if (data.build_stderr) output += data.build_stderr;
+      if (result?.run?.stdout) output += result.run.stdout.trim() || null;
+      if (result?.run?.stderr) output += result.run.stderr.trim() || null;
+      if (result?.run?.signal){
+        toast.error("Error: SIGKILL, Please try to run the code again");
+      };
       setOutput(output);
       handleChangeOutput(output);
-    };
-
-    request(10, callback);
-    function request(
-      retries: number,
-      callback: (data: any, error: any) => void
-    ) {
-      fetch(`https://api.paiza.io/runners/get_details?${query.toString()}`)
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! Status: ${res.status}`);
-          }
-          return res.json();
-        })
-        .then((data) => {
-          // request successful
-
-          if (data.status === "completed") {
-            // server done, deliver data to script to consume
-            callback(data, false);
-          } else {
-            if (retries > 0) {
-              request(--retries, callback);
-            } else {
-              // no retries left, calling callback with error
-              callback("", "out of retries");
-            }
-          }
-        })
-        .catch((error: any) => {
-          if (retries > 0) {
-            request(--retries, callback);
-          } else {
-            callback("", error);
-          }
-        });
+    } catch (error : any) {
+      console.error(`❌ Execution failed:`, error);
+    }finally{
+      setExecutionInProgress(false);
     }
-  };
+  }
 
   return (
     <div>

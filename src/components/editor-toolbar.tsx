@@ -32,10 +32,10 @@ const EditorToolbar = ({ config }: { config: EditorToolbarType }) => {
         >
           <option value="java">Programming Language</option>
           <option value="java">Java</option>
+          <option value="javascript">JavaScript</option>
           <option value="python">Python</option>
           <option value="c">C</option>
           <option value="cpp">C++</option>
-          {/* <option value="javascript">JavaScript</option> */}
         </select>
         <select
           title="Select Editor Theme"
